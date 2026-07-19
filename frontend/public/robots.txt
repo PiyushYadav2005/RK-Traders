@@ -1,0 +1,8 @@
+# RK Traders - robots.txt
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /cart
+Disallow: /checkout
+
+Sitemap: https://rktraders.example.com/sitemap.xml

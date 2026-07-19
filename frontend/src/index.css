@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand colors */
+  --color-volt: #0057ff;
+  --color-volt-dim: #0041c4;
+  --color-volt-glow: #3d7bff;
+  --color-live: #ffd500;
+  --color-live-dim: #d4b200;
+  --color-navy: #0a1128;
+  --color-navy-soft: #101a3d;
+  --color-surface: #f7f9fc;
+  --color-surface-raised: #ffffff;
+  --color-slate: #5b6b82;
+  --color-slate-light: #9aa7ba;
+  --color-line: #e2e8f2;
+
+  /* Type */
+  --font-display: "Space Grotesk", "Inter", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Motion */
+  --ease-current: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--color-surface);
+    color: var(--color-navy);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: var(--color-live);
+    color: var(--color-navy);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-live);
+    outline-offset: 3px;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Circuit current-flow line -- the page's signature motif */
+  .current-line {
+    position: relative;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--color-line) 10%,
+      var(--color-line) 90%,
+      transparent
+    );
+  }
+
+  .current-line::after {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: -8%;
+    width: 8%;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--color-live);
+    box-shadow: 0 0 12px 2px var(--color-live);
+    animation: current-flow 3.5s var(--ease-current) infinite;
+  }
+
+  @keyframes current-flow {
+    0% {
+      left: -8%;
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      left: 100%;
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .current-line::after {
+      animation: none;
+      opacity: 0;
+    }
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}

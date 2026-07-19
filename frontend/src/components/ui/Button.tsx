@@ -1,4 +1,5 @@
 import { type ReactNode, type ButtonHTMLAttributes } from "react";
+import { Link } from "react-router-dom";
 import clsx from "clsx";
 
 type Variant = "primary" | "secondary" | "ghost" | "live";
@@ -6,7 +7,7 @@ type Variant = "primary" | "secondary" | "ghost" | "live";
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   icon?: ReactNode;
-  as?: "button" | "a";
+  as?: "button" | "a" | "link";
   href?: string;
 }
 
@@ -34,12 +35,12 @@ export function Button({
     className
   );
 
-  if (as === "a" && href) {
+  if ((as === "link" || as === "a") && href) {
     return (
-      <a href={href} className={classes}>
+      <Link to={href} className={classes}>
         {children}
         {icon}
-      </a>
+      </Link>
     );
   }
 

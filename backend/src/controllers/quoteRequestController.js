@@ -43,11 +43,14 @@ export const createQuoteRequest = asyncHandler(async (req, res) => {
   });
 
   if (notifyConfig.businessEmail) {
-    sendEmail({
+    const emailRes = await sendEmail({
       to: notifyConfig.businessEmail,
       subject: `New quote request ${quote.quoteNumber} — ${fullName}`,
       html: notificationHtml(quote),
-    }).catch(() => {});
+    });
+    if (!emailRes.sent) {
+      console.error("[email] Failed to send quote notification email");
+    }
   }
 
   if (notifyConfig.businessWhatsapp) {

@@ -20,6 +20,16 @@ const variantStyles: Record<Variant, string> = {
   live: "bg-live text-navy hover:bg-live-dim shadow-[0_8px_24px_-8px_rgba(255,213,0,0.5)]",
 };
 
+function isExternalHref(href: string) {
+  return (
+    href.startsWith("http://") ||
+    href.startsWith("https://") ||
+    href.startsWith("tel:") ||
+    href.startsWith("mailto:") ||
+    href.startsWith("//")
+  );
+}
+
 export function Button({
   variant = "primary",
   icon,
@@ -35,7 +45,23 @@ export function Button({
     className
   );
 
-  if ((as === "link" || as === "a") && href) {
+  if ((as === "a" || as === "link") && href) {
+    if (isExternalHref(href)) {
+      // External links open in new tab for http/https; tel/mailto open natively
+      return (
+        <a
+          href={href}
+          className={classes}
+          target={href.startsWith("http") ? "_blank" : undefined}
+          rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+        >
+          {children}
+          {icon}
+        </a>
+      );
+    }
+
+    // Internal paths — use React Router Link for proper SPA navigation
     return (
       <Link to={href} className={classes}>
         {children}

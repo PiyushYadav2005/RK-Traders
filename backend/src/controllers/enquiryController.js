@@ -14,11 +14,14 @@ export const createEnquiry = asyncHandler(async (req, res) => {
   const enquiry = await Enquiry.create({ name, phone, message });
 
   if (notifyConfig.businessEmail) {
-    sendEmail({
+    const emailRes = await sendEmail({
       to: notifyConfig.businessEmail,
       subject: `New enquiry from ${name}`,
       html: enquiryNotificationHtml(enquiry),
-    }).catch(() => {});
+    });
+    if (!emailRes.sent) {
+      console.error("[email] Failed to send enquiry notification email");
+    }
   }
 
   if (notifyConfig.businessWhatsapp) {

@@ -1,12 +1,12 @@
 export const notifyConfig = {
   smtp: {
     host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
+    port: Number(process.env.SMTP_PORT || 465),
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
   },
-  businessEmail: process.env.BUSINESS_EMAIL, // where order/enquiry notifications land
+  businessEmail: process.env.BUSINESS_EMAIL || process.env.SMTP_USER, // fallback to SMTP_USER if BUSINESS_EMAIL is missing
   businessWhatsapp: process.env.BUSINESS_WHATSAPP, // digits only, e.g. 919335912637
   // Twilio WhatsApp API — optional. Leave unset to skip automatic WhatsApp
   // sending (see src/utils/whatsapp.js for why this can't be faked).

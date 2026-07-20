@@ -45,11 +45,14 @@ export const createWholesaleRequest = asyncHandler(async (req, res) => {
   });
 
   if (notifyConfig.businessEmail) {
-    sendEmail({
+    const emailRes = await sendEmail({
       to: notifyConfig.businessEmail,
       subject: `New wholesale request ${request.requestNumber} — ${customerName}`,
       html: notificationHtml(request),
-    }).catch(() => {});
+    });
+    if (!emailRes.sent) {
+      console.error("[email] Failed to send wholesale notification email");
+    }
   }
 
   if (notifyConfig.businessWhatsapp) {

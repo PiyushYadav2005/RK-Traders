@@ -11,6 +11,10 @@ function getTransporter() {
       port: notifyConfig.smtp.port,
       secure: notifyConfig.smtp.port === 465,
       auth: { user: notifyConfig.smtp.user, pass: notifyConfig.smtp.pass },
+      // Ensure fast fail if SMTP hangs
+      connectionTimeout: 5000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000,
     });
   }
   return transporter;
@@ -28,14 +32,45 @@ export async function sendEmail({ to, subject, html }) {
     return { sent: false, reason: "not_configured" };
   }
 
-  try {
-    await t.sendMail({ from: notifyConfig.smtp.from, to, subject, html });
-    console.log(`[email] ✅ Sent "${subject}" to ${to}`);
-    return { sent: true };
-  } catch (err) {
-    console.error("[email] ❌ Send failed:", err.message);
-    return { sent: false, reason: err.message };
-  }
+let timer;
+
+try {
+  console.log("========== EMAIL DEBUG ==========");
+  console.log("To:", to);
+  console.log("Subject:", subject);
+  console.log("HTML Length:", html?.length);
+
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error("Email sending timed out"));
+    }, 10000);
+  });
+
+  const info = await Promise.race([
+    t.sendMail({
+      from: notifyConfig.smtp.from,
+      to,
+      subject,
+      html,
+    }),
+    timeoutPromise,
+  ]);
+
+  console.log("✅ Email sent");
+  console.log(info);
+
+  return { sent: true };
+} catch (err) {
+  console.error("❌ Email failed");
+  console.error(err);
+
+  return {
+    sent: false,
+    reason: err.message,
+  };
+} finally {
+  clearTimeout(timer);
+}
 }
 
 // ─── Professional Business Alert Email ────────────────────────────────────────

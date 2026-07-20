@@ -147,52 +147,52 @@ export const createGuestOrder = asyncHandler(async (req, res) => {
     statusHistory: [{ status: "placed", note: notes?.trim() || "" }],
   });
 
-  // ── Best-effort notifications ─────────────────────────────────────────────
-  // Order is already saved — email/WhatsApp failures do NOT cancel the order.
-  let emailResult = { sent: false, reason: "not_configured" };
-  let customerEmailResult = { sent: false, reason: "not_configured" };
-
-  if (notifyConfig.businessEmail) {
-    emailResult = await sendEmail({
-      to: notifyConfig.businessEmail,
-      subject: `🛒 New Order ${order.orderNumber} — ${customer.name} | RK Traders`,
-      html: orderNotificationHtml(order, notes?.trim() || ""),
-    }).catch((err) => {
-      console.error("[email] Business notification failed:", err.message);
-      return { sent: false, reason: err.message };
-    });
-  }
-
-  // Optional: customer confirmation if they provided email
-  if (customer.email?.trim()) {
-    customerEmailResult = await sendEmail({
-      to: customer.email.trim(),
-      subject: `Your RK Traders Order has been Received — ${order.orderNumber}`,
-      html: customerConfirmationHtml(order),
-    }).catch((err) => {
-      console.error("[email] Customer confirmation failed:", err.message);
-      return { sent: false, reason: err.message };
-    });
-  }
-
-  // WhatsApp summary
+  // ── Prepare WhatsApp Link ─────────────────────────────────────────────────
   let whatsappLink = null;
   const waSummary = `New order ${order.orderNumber} from ${customer.name} (${customer.phone}) — ${orderItems.length} item(s), total ₹${total}. Address: ${shippingAddress.line1}, ${shippingAddress.city}.`;
 
   if (notifyConfig.businessWhatsapp) {
-    sendWhatsAppMessage(notifyConfig.businessWhatsapp, waSummary).catch(() => {});
     whatsappLink = buildWhatsAppLink(notifyConfig.businessWhatsapp, waSummary);
   }
 
+  // ── Return 201 Success to frontend immediately ────────────────────────────
   res.status(201).json({
     success: true,
     order,
     whatsappLink,
     notifications: {
-      businessEmail: emailResult,
-      customerEmail: customerEmailResult,
+      businessEmail: { sent: "pending" },
+      customerEmail: { sent: "pending" },
     },
   });
+
+  // ── Send notifications in the background ──────────────────────────────────
+  if (notifyConfig.businessWhatsapp) {
+    sendWhatsAppMessage(notifyConfig.businessWhatsapp, waSummary).catch((err) => {
+      console.error("[whatsapp] Notification threw an error:", err);
+    });
+  }
+
+  if (notifyConfig.businessEmail) {
+    sendEmail({
+      to: notifyConfig.businessEmail,
+      subject: `🛒 New Order ${order.orderNumber} — ${customer.name} | RK Traders`,
+      html: orderNotificationHtml(order, notes?.trim() || ""),
+    }).catch((err) => {
+      console.error("[email] Business notification threw an error:", err);
+    });
+  }
+
+  // Optional: customer confirmation if they provided email
+  if (customer.email?.trim()) {
+    sendEmail({
+      to: customer.email.trim(),
+      subject: `Your RK Traders Order has been Received — ${order.orderNumber}`,
+      html: customerConfirmationHtml(order),
+    }).catch((err) => {
+      console.error("[email] Customer confirmation threw an error:", err);
+    });
+  }
 });
 
 // ─── Public: get order by orderNumber ─────────────────────────────────────────
